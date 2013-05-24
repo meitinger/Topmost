@@ -16,46 +16,57 @@
 
 #include <Windows.h>
 
+#ifdef _WIN64
+#define MUTEX_NAME TEXT("{E88E4EFC-BEDA-463C-AC93-65154B1817FC}")
+#else
+#define MUTEX_NAME TEXT("{91383FDC-AF5D-4C17-9347-C3186177EAF6}")
+#endif
+
 INT WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, INT cmdShow)
 {
-	HMODULE library;
-
-	// load the hook library
-	if ((library = LoadLibrary(TEXT("Hook.dll"))) == NULL) return GetLastError();
-	__try
+	// ensure that only one instance is running (but don't fail if the test fails)
+	HANDLE mutex = CreateMutex(NULL, FALSE, MUTEX_NAME);
+	if (mutex == NULL || GetLastError() != ERROR_ALREADY_EXISTS)
 	{
-		HOOKPROC callWndProc;
-		HHOOK callWndHook;
+		HMODULE library;
 
-		// initialize the hook for injecting the "always on top" entry into the system menu
-		if ((callWndProc = (HOOKPROC)GetProcAddress(library, "CallWndProc")) == NULL) return GetLastError();
-		if ((callWndHook = SetWindowsHookEx(WH_CALLWNDPROC, callWndProc, library, 0)) == NULL) return GetLastError();
+		// load the hook library
+		if ((library = LoadLibrary(TEXT("Hook.dll"))) == NULL) return GetLastError();
 		__try
 		{
-			HOOKPROC getMsgProc;
-			HHOOK getMsgHook;
+			HOOKPROC callWndProc;
+			HHOOK callWndHook;
 
-			// initialize the hook for intercepting the entry's command messages
-			if ((getMsgProc = (HOOKPROC)GetProcAddress(library, "GetMsgProc")) == NULL) return GetLastError();
-			if ((getMsgHook = SetWindowsHookEx(WH_GETMESSAGE, getMsgProc, library, 0)) == NULL) return GetLastError();
+			// initialize the hook for injecting the "always on top" entry into the system menu
+			if ((callWndProc = (HOOKPROC)GetProcAddress(library, "CallWndProc")) == NULL) return GetLastError();
+			if ((callWndHook = SetWindowsHookEx(WH_CALLWNDPROC, callWndProc, library, 0)) == NULL) return GetLastError();
 			__try
 			{
-				MSG msg;
-				BOOL ret;
+				HOOKPROC getMsgProc;
+				HHOOK getMsgHook;
 
-				// pump the messages until the end of the session
-				while ((ret = GetMessage(&msg, NULL, 0, 0)) != 0)
+				// initialize the hook for intercepting the entry's command messages
+				if ((getMsgProc = (HOOKPROC)GetProcAddress(library, "GetMsgProc")) == NULL) return GetLastError();
+				if ((getMsgHook = SetWindowsHookEx(WH_GETMESSAGE, getMsgProc, library, 0)) == NULL) return GetLastError();
+				__try
 				{
-					if (ret == -1) return GetLastError();
-					TranslateMessage(&msg);
-					DispatchMessage(&msg);
+					MSG msg;
+					BOOL ret;
+
+					// pump the messages until the end of the session
+					while ((ret = GetMessage(&msg, NULL, 0, 0)) != 0)
+					{
+						if (ret == -1) return GetLastError();
+						TranslateMessage(&msg);
+						DispatchMessage(&msg);
+					}
 				}
+				__finally { UnhookWindowsHookEx(getMsgHook); }
 			}
-			__finally { UnhookWindowsHookEx(getMsgHook); }
+			__finally { UnhookWindowsHookEx(callWndHook); }
 		}
-		__finally { UnhookWindowsHookEx(callWndHook); }
+		__finally { FreeLibrary(library); }
 	}
-	__finally { FreeLibrary(library); }
 
 	// return success
 	return ERROR_SUCCESS;
