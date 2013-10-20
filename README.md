@@ -22,4 +22,4 @@ Each will add the entry to x86 and x64 applications respectively, so you have
 to start both on a 64bit version of Windows.
 
 The application will run for as long as the user is logged in and doesn't
-display any messages, so it's easy to just make it auto-start durin logon.
+display any messages, so it's easy to just make it auto-start during logon.
