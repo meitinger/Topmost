@@ -36,7 +36,6 @@ INT WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, IN
 #ifndef _WIN64
 		STARTUPINFO si;
 		PROCESS_INFORMATION pi;
-		DWORD error;
 
 		ZeroMemory( &si, sizeof(si) );
 		si.cb = sizeof(si);
@@ -49,8 +48,7 @@ INT WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, IN
 			info.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
 			exInfo.BasicLimitInformation = info;
 			SetInformationJobObject(job,JobObjectExtendedLimitInformation,&exInfo,sizeof(exInfo));
-			error = AssignProcessToJobObject(job,pi.hProcess);
-			error = GetLastError();
+			AssignProcessToJobObject(job,pi.hProcess);
 			ResumeThread(pi.hThread);
 		} else {
 			error = GetLastError();
