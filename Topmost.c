@@ -50,8 +50,6 @@ INT WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, IN
 			SetInformationJobObject(job,JobObjectExtendedLimitInformation,&exInfo,sizeof(exInfo));
 			AssignProcessToJobObject(job,pi.hProcess);
 			ResumeThread(pi.hThread);
-		} else {
-			error = GetLastError();
 		}
 #endif
 		/* END CHILD PROCESS STUFF */
