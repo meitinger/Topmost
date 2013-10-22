@@ -41,12 +41,10 @@ INT WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, IN
 		si.cb = sizeof(si);
 		ZeroMemory( &pi, sizeof(pi) );
 
-		if (CreateProcess(L"x64\\Topmost.exe",NULL,NULL,NULL,FALSE,CREATE_SUSPENDED | CREATE_BREAKAWAY_FROM_JOB,NULL,NULL,&si,&pi)) {
+		if (CreateProcess(TEXT("x64\\Topmost.exe"),NULL,NULL,NULL,FALSE,CREATE_SUSPENDED | CREATE_BREAKAWAY_FROM_JOB,NULL,NULL,&si,&pi)) {
 			HANDLE job = CreateJobObject(NULL,NULL);
-			JOBOBJECT_BASIC_LIMIT_INFORMATION info;
 			JOBOBJECT_EXTENDED_LIMIT_INFORMATION exInfo;
-			info.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-			exInfo.BasicLimitInformation = info;
+			exInfo.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
 			SetInformationJobObject(job,JobObjectExtendedLimitInformation,&exInfo,sizeof(exInfo));
 			AssignProcessToJobObject(job,pi.hProcess);
 			ResumeThread(pi.hThread);
