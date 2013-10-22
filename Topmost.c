@@ -26,9 +26,36 @@ INT WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, IN
 {
 	// ensure that only one instance is running (but don't fail if the test fails)
 	HANDLE mutex = CreateMutex(NULL, FALSE, MUTEX_NAME);
+	
+
+	HMODULE library;
+
 	if (mutex == NULL || GetLastError() != ERROR_ALREADY_EXISTS)
 	{
-		HMODULE library;
+		/* BEGIN CHILD PROCESS STUFF */
+#ifndef _WIN64
+		STARTUPINFO si;
+		PROCESS_INFORMATION pi;
+		DWORD error;
+
+		ZeroMemory( &si, sizeof(si) );
+		si.cb = sizeof(si);
+		ZeroMemory( &pi, sizeof(pi) );
+
+		if (CreateProcess(L"x64\\Topmost.exe",NULL,NULL,NULL,FALSE,CREATE_SUSPENDED,NULL,NULL,&si,&pi)) {
+			HANDLE job = CreateJobObject(NULL,NULL);
+			JOBOBJECT_BASIC_LIMIT_INFORMATION info;
+			JOBOBJECT_EXTENDED_LIMIT_INFORMATION exInfo;
+			info.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+			exInfo.BasicLimitInformation = info;
+			SetInformationJobObject(job,JobObjectExtendedLimitInformation,&exInfo,sizeof(exInfo));
+			AssignProcessToJobObject(job,pi.hProcess);
+			ResumeThread(pi.hThread);
+		} else {
+			error = GetLastError();
+		}
+#endif
+		/* END CHILD PROCESS STUFF */
 
 		// load the hook library
 		if ((library = LoadLibrary(TEXT("Hook.dll"))) == NULL) return GetLastError();
