@@ -36,13 +36,14 @@ INT WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, IN
 #ifndef _WIN64
 		STARTUPINFO si;
 		PROCESS_INFORMATION pi;
+		HANDLE job;
 
 		ZeroMemory( &si, sizeof(si) );
 		si.cb = sizeof(si);
 		ZeroMemory( &pi, sizeof(pi) );
 
 		if (CreateProcess(TEXT("x64\\Topmost.exe"),NULL,NULL,NULL,FALSE,CREATE_SUSPENDED | CREATE_BREAKAWAY_FROM_JOB,NULL,NULL,&si,&pi)) {
-			HANDLE job = CreateJobObject(NULL,NULL);
+			job = CreateJobObject(NULL,NULL);
 			JOBOBJECT_EXTENDED_LIMIT_INFORMATION exInfo;
 			exInfo.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
 			SetInformationJobObject(job,JobObjectExtendedLimitInformation,&exInfo,sizeof(exInfo));
